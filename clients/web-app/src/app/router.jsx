@@ -5,14 +5,15 @@ import ProductDetailPage from "../pages/Product/ProductDetailPage";
 import CartPage from "../pages/Cart/CartPage";
 import CheckoutPage from "../pages/Checkout/CheckoutPage";
 import VendorDashboard from "../pages/Vendor/VendorDashboard";
+import LoginPage from "../pages/Auth/LoginPage";
 import ProtectedRoute from "./ProtectedRoute";
 
 const AppRouter = () => {
   return (
     <BrowserRouter>
       <Routes>
-        
         <Route path="/" element={<HomePage />} />
+        <Route path="/login" element={<LoginPage />} />
         <Route path="/products" element={<ProductListingPage />} />
         <Route path="/product/:id" element={<ProductDetailPage />} />
         <Route path="/cart" element={<CartPage />} />
@@ -27,7 +28,6 @@ const AppRouter = () => {
             </ProtectedRoute>
           }
         />
-
       </Routes>
     </BrowserRouter>
   );
