@@ -1,14 +1,15 @@
+import { memo } from "react";
 import ProductCard from "./ProductCard";
 import Skeleton from "../ui/Skeleton";
 
-const ProductGrid = ({ products = [], loading = false }) => {
+const ProductGrid = memo(({ products = [], loading = false }) => {
   if (loading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 w-full flex-1">
         {Array(8)
           .fill(0)
           .map((_, i) => (
-            <Skeleton key={i} className="h-64 w-full rounded-2xl" />
+            <Skeleton key={`skeleton-${i}`} className="h-64 w-full rounded-2xl" />
           ))}
       </div>
     );
@@ -25,11 +26,14 @@ const ProductGrid = ({ products = [], loading = false }) => {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 w-full flex-1">
-      {products.map((product, i) => (
-        <ProductCard key={product.id || i} product={product} />
-      ))}
+      {products.map((product) => {
+        const key = product.id ?? product._id ?? product.sku;
+        return <ProductCard key={key} product={product} />;
+      })}
     </div>
   );
-};
+});
+
+ProductGrid.displayName = "ProductGrid";
 
 export default ProductGrid;
