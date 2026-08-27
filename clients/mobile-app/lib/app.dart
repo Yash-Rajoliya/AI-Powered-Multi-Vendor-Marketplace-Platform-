@@ -25,11 +25,15 @@ class MyApp extends ConsumerWidget {
 
       // 🌐 Global Builder
       builder: (context, child) {
+        if (child == null) {
+          return const SizedBox.shrink();
+        }
+
         return GestureDetector(
           onTap: () {
             FocusManager.instance.primaryFocus?.unfocus();
           },
-          child: child!,
+          child: child,
         );
       },
     );

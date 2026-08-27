@@ -9,11 +9,7 @@ import 'app.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 📊 Logger setup
   final logger = LoggerService();
-
-  // 🌍 Initialize Environment
-  AppEnv.init(Env.dev);
 
   // Catch Flutter framework errors
   FlutterError.onError = (FlutterErrorDetails details) {
@@ -21,18 +17,21 @@ Future<void> main() async {
     logger.log("Flutter Error", error: details.exception, stackTrace: details.stack);
   };
 
-  // 🔔 Safely Initialize Notifications
-  try {
-    final notificationService = NotificationService();
-    await notificationService.init();
-  } catch (e, stack) {
-    logger.log("Notification Service initialization failed", error: e, stackTrace: stack);
-  }
-
-  logger.log("App starting...");
-
   runZonedGuarded(
-    () {
+    () async {
+      // 🌍 Initialize Environment inside guarded zone
+      AppEnv.init(Env.dev);
+
+      // 🔔 Safely Initialize Notifications
+      try {
+        final notificationService = NotificationService();
+        await notificationService.init();
+      } catch (e, stack) {
+        logger.log("Notification Service initialization failed", error: e, stackTrace: stack);
+      }
+
+      logger.log("App starting...");
+
       runApp(
         const ProviderScope(
           child: MyApp(),
