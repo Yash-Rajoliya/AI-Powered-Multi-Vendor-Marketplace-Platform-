@@ -1,0 +1,17 @@
+name: mobile_app
+description: Advanced marketplace app
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_riverpod: ^2.4.0
+  dio: ^5.4.0
+  intl: ^0.18.0
+  shared_preferences: ^2.2.2
+  local_auth: ^2.1.6
+
+flutter:
+  uses-material-design: true
