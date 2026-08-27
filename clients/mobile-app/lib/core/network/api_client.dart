@@ -11,19 +11,19 @@ class ApiClient {
   ApiClient(SecureStorage storage)
       : dio = Dio(
           BaseOptions(
-            baseUrl: AppEnv.baseUrl,
+            baseUrl: AppEnv.baseUrl.isNotEmpty ? AppEnv.baseUrl : "https://api.smartcart.com",
             connectTimeout: const Duration(seconds: 15),
             receiveTimeout: const Duration(seconds: 15),
-            headers: {
+            headers: const {
               "Content-Type": "application/json",
+              "Accept": "application/json",
             },
           ),
         ) {
     dio.interceptors.addAll([
-      AuthInterceptor(storage),
       LoggingInterceptor(),
       RetryInterceptor(dio),
+      AuthInterceptor(storage),
     ]);
   }
 }
-
