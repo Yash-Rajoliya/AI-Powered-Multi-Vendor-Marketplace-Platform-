@@ -1,0 +1,25 @@
+{
+  "dashboard": {
+    "title": "Marketplace Monitoring",
+    "panels": [
+      {
+        "type": "graph",
+        "title": "API Gateway Requests",
+        "targets": [
+          {
+            "expr": "http_requests_total"
+          }
+        ]
+      },
+      {
+        "type": "graph",
+        "title": "CPU Usage",
+        "targets": [
+          {
+            "expr": "process_cpu_seconds_total"
+          }
+        ]
+      }
+    ]
+  }
+}

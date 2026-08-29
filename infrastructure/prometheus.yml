@@ -1,12 +1,23 @@
 global:
   scrape_interval: 15s
-  evaluation_interval: 15s
 
 scrape_configs:
-  - job_name: 'prometheus'
+  - job_name: "api-gateway"
     static_configs:
-      - targets: ['prometheus:9090']
+      - targets: ["api-gateway:4000"]
 
-  - job_name: 'grafana'
+  - job_name: "auth-service"
     static_configs:
-      - targets: ['grafana:3000']
+      - targets: ["auth-service:4001"]
+
+  - job_name: "product-service"
+    static_configs:
+      - targets: ["product-service:4002"]
+
+  - job_name: "order-service"
+    static_configs:
+      - targets: ["order-service:4005"]
+
+  - job_name: "inventory-service"
+    static_configs:
+      - targets: ["inventory-service:4004"]
