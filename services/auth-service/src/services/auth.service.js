@@ -22,13 +22,14 @@ class AuthService {
             name,
             email,
             password: hashedPassword,
-            role
+            role: role || "user"
         });
 
         const token = this.generateToken(user);
+        const sanitizedUser = this.sanitizeUser(user);
 
         return {
-            user,
+            user: sanitizedUser,
             token
         };
     }
@@ -51,28 +52,40 @@ class AuthService {
             throw error;
         }
 
-        await userRepository.updateLastLogin(user._id);
+        if (user._id) {
+            await userRepository.updateLastLogin(user._id);
+        }
 
         const token = this.generateToken(user);
+        const sanitizedUser = this.sanitizeUser(user);
 
         return {
-            user,
+            user: sanitizedUser,
             token
         };
     }
 
     generateToken(user) {
 
+        const secret = process.env.JWT_SECRET || "default_jwt_secret";
+
         return jwt.sign(
             {
-                userId: user._id,
+                id: user._id || user.id,
+                email: user.email,
                 role: user.role
             },
-            process.env.JWT_SECRET,
+            secret,
             {
                 expiresIn: process.env.JWT_EXPIRES_IN || "7d"
             }
         );
+    }
+
+    sanitizeUser(user) {
+        const userObj = user.toObject ? user.toObject() : { ...user };
+        delete userObj.password;
+        return userObj;
     }
 }
 

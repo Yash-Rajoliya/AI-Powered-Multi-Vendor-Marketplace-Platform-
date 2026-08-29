@@ -6,6 +6,15 @@ class AuthController {
 
         try {
 
+            const { name, email, password } = req.body;
+
+            if (!email || !password || !name) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Name, email, and password are required"
+                });
+            }
+
             const result = await authService.register(req.body);
 
             res.status(201).json({
@@ -25,6 +34,13 @@ class AuthController {
         try {
 
             const { email, password } = req.body;
+
+            if (!email || !password) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Email and password are required"
+                });
+            }
 
             const result = await authService.login(email, password);
 
