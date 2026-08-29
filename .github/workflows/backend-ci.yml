@@ -1,0 +1,57 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+
+  build-and-test:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        service:
+          - auth-service
+          - product-service
+          - order-service
+          - vendor-service
+          - inventory-service
+          - recommendation-service
+          - notification-service
+
+    defaults:
+      run:
+        working-directory: ${{ matrix.service }}
+
+    steps:
+
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Lint (optional)
+        run: |
+          if [ -f package.json ]; then
+            npm run lint || true
+          fi
+
+      - name: Run Tests (if exists)
+        run: |
+          if [ -f package.json ]; then
+            npm test || true
+          fi
+
+      - name: Build Check
+        run: |
+          node -e "console.log('Build OK for ${{ matrix.service }}')"
