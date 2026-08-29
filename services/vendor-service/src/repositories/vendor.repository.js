@@ -10,6 +10,10 @@ class VendorRepository {
         return Vendor.findOne({ ownerId, isActive: true });
     }
 
+    async findByOwnerAnyStatus(ownerId) {
+        return Vendor.findOne({ ownerId });
+    }
+
     async findById(id) {
         return Vendor.findById(id);
     }
@@ -19,16 +23,18 @@ class VendorRepository {
     }
 
     async updateVendor(id, data) {
-        return Vendor.findByIdAndUpdate(id, data, { new: true });
+        return Vendor.findByIdAndUpdate(
+            id,
+            { $set: data },
+            { new: true, runValidators: true }
+        );
     }
 
     async listVendors(query, options) {
-
         return Vendor.find(query)
             .skip(options.skip)
             .limit(options.limit)
             .sort(options.sort);
-
     }
 
 }
