@@ -1,56 +1,62 @@
 const repository = require("../repositories/inventory.repository");
 const cache = require("../cache/inventory.cache");
-const {publishInventoryEvent} = require("../events/inventory.publisher");
-const {NotFoundError} = require("../utils/errors");
+const { publishInventoryEvent } = require("../events/inventory.publisher");
+const { NotFoundError, BadRequestError } = require("../utils/errors");
 
-class InventoryService{
+class InventoryService {
 
-async updateStock(productId,quantity){
+    async updateStock(productId, quantity) {
+        const inventory = await repository.updateStock(productId, quantity);
 
-const inventory = await repository.updateStock(productId,quantity);
+        if (!inventory) {
+            throw new NotFoundError("Inventory not found or insufficient stock to perform decrement");
+        }
 
-if(!inventory) throw new NotFoundError("Inventory not found");
+        await cache.invalidate(productId);
 
-await cache.invalidate(productId);
+        await publishInventoryEvent("inventory.updated", inventory);
 
-await publishInventoryEvent("inventory.updated",inventory);
+        return inventory;
+    }
 
-return inventory;
+    async checkStock(productId) {
+        const cached = await cache.get(productId);
 
-}
+        if (cached) return cached;
 
-async checkStock(productId){
+        const inventory = await repository.findByProduct(productId);
 
-const cached = await cache.get(productId);
+        if (!inventory) throw new NotFoundError("Inventory not found");
 
-if(cached) return cached;
+        await cache.set(productId, inventory);
 
-const inventory = await repository.findByProduct(productId);
+        return inventory;
+    }
 
-if(!inventory) throw new NotFoundError("Inventory not found");
+    async reserveInventory(productId, quantity) {
+        if (quantity <= 0) {
+            throw new BadRequestError("Reservation quantity must be greater than zero");
+        }
 
-await cache.set(productId,inventory);
+        const inventory = await repository.reserveStock(productId, quantity);
 
-return inventory;
+        if (!inventory) {
+            const existing = await repository.findByProduct(productId);
+            if (!existing) {
+                throw new NotFoundError("Inventory not found");
+            }
+            throw new BadRequestError("Insufficient available stock to complete reservation");
+        }
 
-}
+        await cache.invalidate(productId);
 
-async reserveInventory(productId,quantity){
+        await publishInventoryEvent("inventory.reserved", {
+            productId,
+            quantity
+        });
 
-const inventory = await repository.reserveStock(productId,quantity);
-
-if(!inventory) throw new Error("Insufficient stock");
-
-await cache.invalidate(productId);
-
-await publishInventoryEvent("inventory.reserved",{
-productId,
-quantity
-});
-
-return inventory;
-
-}
+        return inventory;
+    }
 
 }
 

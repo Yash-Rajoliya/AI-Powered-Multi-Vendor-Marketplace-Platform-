@@ -1,42 +1,46 @@
 const Inventory = require("../models/inventory.model");
 
-class InventoryRepository{
+class InventoryRepository {
 
-async create(data){
-return Inventory.create(data);
-}
+    async create(data) {
+        return Inventory.create(data);
+    }
 
-async findByProduct(productId){
-return Inventory.findOne({productId});
-}
+    async findByProduct(productId) {
+        return Inventory.findOne({ productId });
+    }
 
-async updateStock(productId,quantity){
+    async updateStock(productId, quantity) {
+        // If quantity is negative, ensure totalStock doesn't drop below reservedStock
+        const query = { productId };
+        if (quantity < 0) {
+            query.$expr = {
+                $gte: [{ $add: ["$totalStock", quantity] }, "$reservedStock"]
+            };
+        }
 
-return Inventory.findOneAndUpdate(
-{productId},
-{$inc:{totalStock:quantity}},
-{new:true}
-);
+        return Inventory.findOneAndUpdate(
+            query,
+            { $inc: { totalStock: quantity } },
+            { new: true, runValidators: true }
+        );
+    }
 
-}
-
-async reserveStock(productId,quantity){
-
-return Inventory.findOneAndUpdate(
-{
-productId,
-$expr:{
-$gte:[
-{$subtract:["$totalStock","$reservedStock"]},
-quantity
-]
-}
-},
-{$inc:{reservedStock:quantity}},
-{new:true}
-);
-
-}
+    async reserveStock(productId, quantity) {
+        return Inventory.findOneAndUpdate(
+            {
+                productId,
+                $expr: {
+                    $gte: [
+                        { $subtract: ["$totalStock", { $ifNull: ["$reservedStock", 0] }] },
+                        quantity
+                    ]
+                }
+            },
+            { $inc: { reservedStock: quantity } },
+            { new: true, runValidators: true }
+        );
+    }
 
 }
 
