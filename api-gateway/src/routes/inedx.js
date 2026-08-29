@@ -1,58 +1,35 @@
 const { createProxyMiddleware } = require("http-proxy-middleware");
-
 const services = require("../config/services.config");
 const authMiddleware = require("../middleware/auth.middleware");
 
-module.exports = function(app){
+const createServiceProxy = (target) =>
+  createProxyMiddleware({
+    target,
+    changeOrigin: true,
+    onError: (err, req, res) => {
+      console.error(`Proxy Error [${req.method} ${req.originalUrl}]:`, err.message);
+      if (!res.headersSent) {
+        res.status(503).json({ error: "Service unavailable" });
+      }
+    },
+  });
 
-  app.use("/api/auth",
-    createProxyMiddleware({
-      target: services.AUTH,
-      changeOrigin: true
-    })
-  );
+module.exports = function (app) {
+  app.use("/api/auth", createServiceProxy(services.AUTH));
 
-  app.use("/api/products",
-    createProxyMiddleware({
-      target: services.PRODUCT,
-      changeOrigin: true
-    })
-  );
+  app.use("/api/products", createServiceProxy(services.PRODUCT));
 
-  app.use("/api/vendors",
-    createProxyMiddleware({
-      target: services.VENDOR,
-      changeOrigin: true
-    })
-  );
+  app.use("/api/vendors", createServiceProxy(services.VENDOR));
 
-  app.use("/api/orders",
+  app.use(
+    "/api/orders",
     authMiddleware,
-    createProxyMiddleware({
-      target: services.ORDER,
-      changeOrigin: true
-    })
+    createServiceProxy(services.ORDER)
   );
 
-  app.use("/api/inventory",
-    createProxyMiddleware({
-      target: services.INVENTORY,
-      changeOrigin: true
-    })
-  );
+  app.use("/api/inventory", createServiceProxy(services.INVENTORY));
 
-  app.use("/api/recommendations",
-    createProxyMiddleware({
-      target: services.RECOMMENDATION,
-      changeOrigin: true
-    })
-  );
+  app.use("/api/recommendations", createServiceProxy(services.RECOMMENDATION));
 
-  app.use("/api/notifications",
-    createProxyMiddleware({
-      target: services.NOTIFICATION,
-      changeOrigin: true
-    })
-  );
-
+  app.use("/api/notifications", createServiceProxy(services.NOTIFICATION));
 };
