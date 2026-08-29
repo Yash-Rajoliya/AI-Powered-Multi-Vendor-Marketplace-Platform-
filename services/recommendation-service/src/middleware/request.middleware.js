@@ -1,0 +1,11 @@
+const logger = require("../utils/logger");
+
+function requestLogger(req, res, next) {
+
+  logger.info(`${req.method} ${req.originalUrl}`);
+
+  next();
+
+}
+
+module.exports = requestLogger;
