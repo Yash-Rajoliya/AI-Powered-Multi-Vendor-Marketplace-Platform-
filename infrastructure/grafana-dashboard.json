@@ -1,24 +1,39 @@
 {
   "dashboard": {
     "title": "Marketplace Monitoring",
+    "refresh": "5s",
     "panels": [
       {
-        "type": "graph",
-        "title": "API Gateway Requests",
+        "type": "timeseries",
+        "title": "API Gateway Request Rate (req/sec)",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
         "targets": [
           {
-            "expr": "http_requests_total"
+            "expr": "sum(rate(http_requests_total[5m])) by (status, method)",
+            "legendFormat": "{{method}} {{status}}"
           }
-        ]
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "reqps"
+          }
+        }
       },
       {
-        "type": "graph",
-        "title": "CPU Usage",
+        "type": "timeseries",
+        "title": "CPU Usage (%)",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
         "targets": [
           {
-            "expr": "process_cpu_seconds_total"
+            "expr": "rate(process_cpu_seconds_total[5m]) * 100",
+            "legendFormat": "{{job}}"
           }
-        ]
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent"
+          }
+        }
       }
     ]
   }
