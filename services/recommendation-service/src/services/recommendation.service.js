@@ -4,52 +4,55 @@ const ranking = require("./ranking.service");
 const repository = require("../repositories/behavior.repository");
 const cache = require("../cache/recommendation.cache");
 
-class RecommendationService{
+class RecommendationService {
 
-async getSimilarProducts(productId){
+  async getSimilarProducts(productId) {
+    const cached = await cache.getSimilar(productId);
+    if (cached) return cached;
 
-const cached = await cache.getSimilar(productId);
-if(cached) return cached;
+    const products = await similarity.getSimilarProducts(productId);
 
-const products = await similarity.getSimilarProducts(productId);
+    // Store sliced results in cache with configured TTL
+    const topProducts = products.slice(0, 10);
+    await cache.setSimilar(productId, topProducts);
 
-await cache.setSimilar(productId,products);
+    return topProducts;
+  }
 
-return products;
+  async getRecommendedProducts(userId) {
+    const cached = await cache.getUserRecommendations(userId);
+    if (cached) return cached;
 
-}
+    const similarUsers = await collaborative.getSimilarUsers(userId);
 
-async getRecommendedProducts(userId){
+    let candidateProducts = [];
 
-const cached = await cache.getUserRecommendations(userId);
-if(cached) return cached;
+    for (const user of similarUsers) {
+      const interactions = await repository.getUserInteractions(user);
 
-const similarUsers = await collaborative.getSimilarUsers(userId);
+      candidateProducts.push(
+        ...interactions.map(i => i.productId.toString())
+      );
+    }
 
-let candidateProducts = [];
+    const userInteractions = await repository.getUserInteractions(userId);
 
-for(const user of similarUsers){
+    const ranked = ranking.rankProductsForUser(
+      candidateProducts,
+      userInteractions
+    );
 
-const interactions = await repository.getUserInteractions(user);
+    // Slice top recommendations BEFORE caching to avoid storing huge candidates
+    const topRecommendations = ranked.slice(0, 10);
 
-candidateProducts.push(
-...interactions.map(i=>i.productId.toString())
-);
+    await cache.setUserRecommendations(userId, topRecommendations);
 
-}
+    return topRecommendations;
+  }
 
-const userInteractions = await repository.getUserInteractions(userId);
-
-const ranked = ranking.rankProductsForUser(
-candidateProducts,
-userInteractions
-);
-
-await cache.setUserRecommendations(userId,ranked);
-
-return ranked.slice(0,10);
-
-}
+  async invalidateUserRecommendations(userId) {
+    await cache.delUserRecommendations(userId);
+  }
 
 }
 
