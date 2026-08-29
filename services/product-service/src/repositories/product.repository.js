@@ -7,7 +7,11 @@ class ProductRepository {
     }
 
     async updateProduct(productId, data) {
-        return await Product.findByIdAndUpdate(productId, data, { new: true });
+        return await Product.findByIdAndUpdate(
+            productId,
+            { $set: data },
+            { new: true, runValidators: true }
+        );
     }
 
     async deleteProduct(productId) {
@@ -16,6 +20,10 @@ class ProductRepository {
 
     async findById(productId) {
         return await Product.findById(productId);
+    }
+
+    async findOne(query) {
+        return await Product.findOne(query);
     }
 
     async findVendorProducts(vendorId, query) {

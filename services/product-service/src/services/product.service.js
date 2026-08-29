@@ -9,6 +9,23 @@ class ProductService {
 
     async createProduct(data) {
         try {
+            // Check for existing product to prevent obvious duplicates
+            if (data.vendorId && (data.sku || data.title)) {
+                const query = { vendorId: data.vendorId };
+                if (data.sku) {
+                    query.sku = data.sku;
+                } else {
+                    query.title = data.title;
+                }
+
+                const existingProduct = await productRepository.findOne(query);
+                if (existingProduct) {
+                    const error = new Error("Product with this SKU or title already exists for this vendor");
+                    error.statusCode = 409;
+                    throw error;
+                }
+            }
+
             const product = await productRepository.createProduct(data);
 
             // Invalidate all product list caches
@@ -31,6 +48,14 @@ class ProductService {
             return product;
 
         } catch (error) {
+            // Handle DB duplicate key race conditions gracefully
+            if (error.code === 11000) {
+                const duplicateError = new Error("Duplicate product entry detected");
+                duplicateError.statusCode = 409;
+                logger.error("Product creation race condition caught", error);
+                throw duplicateError;
+            }
+
             logger.error("Product creation failed", error);
             throw error;
         }
@@ -51,6 +76,12 @@ class ProductService {
                 updateData
             );
 
+            if (!updatedProduct) {
+                const error = new Error("Product update failed due to concurrent modification");
+                error.statusCode = 409;
+                throw error;
+            }
+
             // Invalidate single product and list caches
             await this.invalidateProductCache(productId);
 
@@ -70,6 +101,12 @@ class ProductService {
             return updatedProduct;
 
         } catch (error) {
+            if (error.code === 11000) {
+                const duplicateError = new Error("Update conflicts with an existing product record");
+                duplicateError.statusCode = 409;
+                throw duplicateError;
+            }
+
             logger.error("Product update failed", error);
             throw error;
         }
