@@ -1,25 +1,29 @@
 const jwt = require("jsonwebtoken");
 
-function authMiddleware(req,res,next){
-
-  const token = req.headers.authorization?.split(" ")[1];
-
-  if(!token){
-    return res.status(401).json({message:"Unauthorized"});
+function authMiddleware(req, res, next) {
+  // Allow CORS preflight requests to pass through
+  if (req.method === "OPTIONS") {
+    return next();
   }
 
-  try{
+  const authHeader = req.headers.authorization;
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ message: "Unauthorized: Missing or malformed token" });
+  }
 
+  const token = authHeader.split(" ")[1];
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || "default_secret");
     req.user = decoded;
-
-    next();
-
-  }catch(err){
-    return res.status(401).json({message:"Invalid Token"});
+    return next();
+  } catch (err) {
+    if (err.name === "TokenExpiredError") {
+      return res.status(401).json({ message: "Token Expired" });
+    }
+    return res.status(401).json({ message: "Invalid Token" });
   }
-
 }
 
 module.exports = authMiddleware;

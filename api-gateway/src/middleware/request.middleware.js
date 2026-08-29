@@ -5,8 +5,10 @@ const requestLogger = (req, res, next) => {
 
   res.on("finish", () => {
     const duration = Date.now() - start;
+    const userId = req.user?.id || req.user?._id || "anonymous";
+
     logger.info?.(
-      `${req.method} ${req.originalUrl} ${res.statusCode} - ${duration}ms`
+      `${req.method} ${req.originalUrl} ${res.statusCode} - ${duration}ms [User: ${userId}]`
     );
   });
 
