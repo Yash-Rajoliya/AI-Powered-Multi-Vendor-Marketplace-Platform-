@@ -7,9 +7,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-
   build-and-test:
-
     runs-on: ubuntu-latest
 
     strategy:
@@ -28,7 +26,6 @@ jobs:
         working-directory: ${{ matrix.service }}
 
     steps:
-
       - name: Checkout Code
         uses: actions/checkout@v4
 
@@ -36,20 +33,22 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 18
+          cache: "npm"
+          cache-dependency-path: "${{ matrix.service }}/package-lock.json"
 
       - name: Install Dependencies
-        run: npm install
+        run: npm ci
 
       - name: Lint (optional)
         run: |
           if [ -f package.json ]; then
-            npm run lint || true
+            npm run lint --if-present
           fi
 
       - name: Run Tests (if exists)
         run: |
           if [ -f package.json ]; then
-            npm test || true
+            npm test --if-present
           fi
 
       - name: Build Check
