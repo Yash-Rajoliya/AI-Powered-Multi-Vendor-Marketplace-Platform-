@@ -6,10 +6,12 @@ const createServiceProxy = (target) =>
   createProxyMiddleware({
     target,
     changeOrigin: true,
+    timeout: services.TIMEOUT,
+    proxyTimeout: services.TIMEOUT,
     onError: (err, req, res) => {
       console.error(`Proxy Error [${req.method} ${req.originalUrl}]:`, err.message);
       if (!res.headersSent) {
-        res.status(503).json({ error: "Service unavailable" });
+        res.status(504).json({ error: "Gateway Timeout or Service Unavailable" });
       }
     },
   });
